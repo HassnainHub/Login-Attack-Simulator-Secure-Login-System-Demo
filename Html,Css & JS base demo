@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Secure Login Simulator</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+}
+
+.box {
+    background: #111827;
+    padding: 20px;
+    border-radius: 12px;
+    width: 380px;
+}
+
+h2 {
+    text-align: center;
+    color: #38bdf8;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+    border: none;
+}
+
+button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background: #22c55e;
+    border: none;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+button:hover {
+    background: #16a34a;
+}
+
+.captcha {
+    margin-top: 10px;
+    background: #1f2937;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.status {
+    margin-top: 10px;
+    padding: 10px;
+    background: #1f2937;
+    border-radius: 6px;
+}
+
+.bad { color: #ef4444; }
+.good { color: #22c55e; }
+.warn { color: #facc15; }
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h2>🛡️ Secure Login System</h2>
+
+    <input type="password" id="password" placeholder="Enter Password">
+
+    <!-- CAPTCHA -->
+    <div class="captcha">
+        <input type="checkbox" id="captcha"> I am not a robot 🤖
+    </div>
+
+    <button onclick="login()">Login</button>
+
+    <div class="status" id="status">System Ready</div>
+</div>
+
+<script>
+
+let attempts = 0;
+let locked = false;
+let lockTime = 30; // seconds
+
+function isStrong(pw){
+    return pw.length >= 10 &&
+    /[A-Z]/.test(pw) &&
+    /[a-z]/.test(pw) &&
+    /[0-9]/.test(pw) &&
+    /[@$!%*?&#]/.test(pw);
+}
+
+function notify(msg){
+    alert(msg);
+}
+
+function login(){
+
+    let pw = document.getElementById("password").value;
+    let captcha = document.getElementById("captcha").checked;
+    let status = document.getElementById("status");
+
+    // ⛔ BLOCK CHECK FIRST (IMPORTANT FIX)
+    if(locked){
+        status.innerHTML = "⛔ SYSTEM LOCKED... wait " + lockTime + " sec";
+        status.className = "status warn";
+        notify("System is locked!");
+        return;
+    }
+
+    // 🤖 CAPTCHA
+    if(!captcha){
+        status.innerHTML = "❌ CAPTCHA not verified";
+        notify("Verify CAPTCHA first");
+        return;
+    }
+
+    // ❌ Weak password = punishment + attempt count
+    if(!isStrong(pw)){
+        attempts++;
+
+        status.innerHTML = `❌ Weak Password Detected | Attempt ${attempts}/3`;
+        status.className = "status bad";
+
+        notify("Weak password rejected!");
+
+        // ⏳ small delay simulation
+        setTimeout(()=>{
+            status.innerHTML = "System Ready";
+        }, 2000);
+
+        // 🔒 LOCK after 3 attempts
+        if(attempts >= 3){
+            lockSystem();
+        }
+
+        return;
+    }
+
+    // reset attempts if strong password used correctly
+    attempts = 0;
+
+    status.innerHTML = "✅ Login Successful (Secure System)";
+    status.className = "status good";
+
+    notify("Login Success!");
+}
+
+
+// 🔒 LOCK FUNCTION (REAL TIMER SYSTEM)
+function lockSystem(){
+
+    locked = true;
+    lockTime = 10;
+
+    let status = document.getElementById("status");
+
+    let timer = setInterval(()=>{
+
+        status.innerHTML = `🔒 SYSTEM LOCKED | Try again in ${lockTime} sec`;
+        status.className = "status warn";
+
+        lockTime--;
+
+        if(lockTime < 0){
+            clearInterval(timer);
+            locked = false;
+            attempts = 0;
+
+            status.innerHTML = "🟢 Lock Removed. You can try again";
+            status.className = "status good";
+
+            notify("System unlocked!");
+        }
+
+    },1000);
+}
+
+</script>
+
+</body>
+</html>
